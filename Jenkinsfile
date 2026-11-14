@@ -12,6 +12,7 @@ pipeline {
             }
             stage('Build') {
              steps {
+                sh 'echo ls -a'
                 sh 'npm --version'
                 sh 'node --version'
                 sh 'npm ci'
