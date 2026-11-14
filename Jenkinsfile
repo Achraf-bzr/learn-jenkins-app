@@ -33,12 +33,6 @@ pipeline {
                       sh -c "npm run build"
 
                     if errorlevel 1 exit /b 1
-
-                    echo ===== VERIFYING BUILD =====
-
-                    if not exist build\\index.html exit /b 1
-
-                    echo Build completed successfully!
                 '''
             }
         }
@@ -47,21 +41,12 @@ pipeline {
         stage('Test') {
             steps {
 
-                echo 'Running application tests...'
+                echo 'Running automated tests...'
 
                 bat '''
                     @echo off
 
-                    echo ===== VERIFYING BUILD ARTIFACT =====
-
-                    if not exist build\\index.html (
-                        echo ERROR: index.html not found!
-                        exit /b 1
-                    )
-
-                    echo Build artifact exists!
-
-                    echo ===== RUNNING AUTOMATED TESTS =====
+                    echo ===== RUNNING TESTS =====
 
                     docker run --rm ^
                       -v "%WORKSPACE%:/app" ^
@@ -72,15 +57,26 @@ pipeline {
 
                     if errorlevel 1 exit /b 1
 
-                    echo ===== TESTS COMPLETED =====
+                    echo ===== CHECKING JUNIT REPORT =====
+
+                    if not exist test-results\\junit.xml (
+                        echo ERROR: JUnit report not found!
+                        exit /b 1
+                    )
+
+                    echo JUnit report generated successfully!
+
+                    dir test-results
                 '''
             }
         }
     }
 
+    // PUBLISH JUNIT REPORT
     post {
+
         always {
-            echo 'Pipeline execution finished!'
+            junit 'test-results/junit.xml'
         }
 
         success {
