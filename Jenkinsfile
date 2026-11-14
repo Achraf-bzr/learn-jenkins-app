@@ -5,6 +5,7 @@ pipeline {
 
     stages {
 
+        // BUILD STAGE
         stage('Build') {
             steps {
 
@@ -33,16 +34,45 @@ pipeline {
 
                     if errorlevel 1 exit /b 1
 
-                    echo ===== BUILD OUTPUT =====
+                    echo ===== VERIFYING BUILD =====
+
+                    if not exist build\\index.html exit /b 1
+
+                    echo Build completed successfully!
+                '''
+            }
+        }
+
+        // TEST STAGE
+        stage('Test') {
+            steps {
+
+                echo 'Running application tests...'
+
+                bat '''
+                    @echo off
+
+                    echo ===== VERIFYING BUILD ARTIFACT =====
 
                     if not exist build\\index.html (
-                        echo ERROR: Build output not found!
+                        echo ERROR: index.html not found!
                         exit /b 1
                     )
 
-                    dir build
+                    echo Build artifact exists!
 
-                    echo BUILD COMPLETED SUCCESSFULLY!
+                    echo ===== RUNNING AUTOMATED TESTS =====
+
+                    docker run --rm ^
+                      -v "%WORKSPACE%:/app" ^
+                      -w /app ^
+                      -e CI=true ^
+                      node:18-alpine ^
+                      sh -c "npm test -- --watchAll=false"
+
+                    if errorlevel 1 exit /b 1
+
+                    echo ===== TESTS COMPLETED =====
                 '''
             }
         }
@@ -50,15 +80,15 @@ pipeline {
 
     post {
         always {
-            echo 'Build process finished!'
+            echo 'Pipeline execution finished!'
         }
 
         success {
-            echo 'SUCCESS: Project built successfully!'
+            echo 'SUCCESS: Build and tests completed!'
         }
 
         failure {
-            echo 'FAILURE: Project build failed!'
+            echo 'FAILURE: Build or tests failed!'
         }
     }
 }
