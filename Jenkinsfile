@@ -72,29 +72,31 @@ pipeline {
         }
 
 
+      
         stage('Deploy') {
 
              steps {
 
                 echo 'Installing Netlify CLI...'
 
-                 bat '''
-                         @echo off
+                bat '''
+                 @echo off
 
-                        echo ===== INSTALLING NETLIFY CLI =====
+                 echo ===== PREPARING NETLIFY CLI DIRECTORY =====
 
-                        docker run --rm ^
-                        -v "%WORKSPACE%:/app" ^
-                        -w /app ^
-                        node:22-alpine ^
-                        sh -c "node --version && npm install --no-save --no-package-lock netlify-cli && ./node_modules/.bin/netlify --version"
+                 docker run --rm ^
+                 -v "%WORKSPACE%:/app" ^
+                 -w /app ^
+                 node:22-alpine ^
+                 sh -c "mkdir -p /app/netlify-cli-tools && cd /app/netlify-cli-tools && if [ ! -f package.json ]; then npm init -y; fi && npm install --save-exact netlify-cli@27.19.0 && ./node_modules/.bin/netlify --version"
 
-                        if errorlevel 1 exit /b 1
+                 if errorlevel 1 exit /b 1
 
-                            echo ===== NETLIFY CLI INSTALLED =====
-                        '''
-             }
-        }
+                echo ===== NETLIFY CLI INSTALLED SUCCESSFULLY =====
+             '''
+           }
+       }
+
 
     }
 
